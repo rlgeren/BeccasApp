@@ -11,10 +11,14 @@ async function connector() {
         password: 'Es7ofvaha!',
         port: 5432,
     });
-    await client.connect();
-    const res = await client.query('SELECT * FROM teachers');
-    console.log(res.rows[0].first_name); // Hello world!
-    await client.end();
+    try {
+        await client.connect();
+        const res = await client.query('SELECT * FROM teachers');
+        console.log(res.rows[0].first_name);
+        await client.end();
+    } catch (error) {
+        console.log("Unable to establish connection to database");
+    }
 };
 
 module.exports = {output, connector};
