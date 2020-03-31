@@ -13,12 +13,53 @@ async function connector() {
     });
     try {
         await client.connect();
-        const res = await client.query('SELECT * FROM teachers');
-        console.log(res.rows[0].first_name);
-        await client.end();
+
+        const {bookTitle, firstName, lastName, pages} = await getInput();
+
+        const query = 'INSERT INTO true_crime_books(title, author_first_name, author_last_name, page_count) VALUES ($1, $2, $3, $4) RETURNING *';
+        const values = [bookTitle, firstName, lastName, pages];
+
+        const res = await client.query(query, values);
+        console.log(res.rows[0]);
     } catch (error) {
-        console.log("Unable to establish connection to database");
+        console.log(`connector: ${error}`);
+    } finally {
+        await client.end();
     }
 };
+
+async function getInput() {
+    try {
+        const readline = require("readline");
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+        
+        //setup the questions
+        const questions = new Promise((resolve, reject) => {
+            rl.question("What is the title of the book? ", function(bookTitle) {
+                rl.question("What is the author's first name? ", function(firstName) {
+                    rl.question("What is the author's last name? ", function(lastName) {
+                        rl.question("How many pages does the book have? ", function(pages) {
+                            resolve({bookTitle, firstName, lastName, pages});
+                        });
+                    });
+                });
+            });
+        });
+
+        const {bookTitle, firstName, lastName, pages} = await questions;
+        // close stdin when done
+        rl.close()
+
+        // return the values
+        return {bookTitle, firstName, lastName, pages};
+    } catch (error) {
+        console.log(`getInput: ${error}`);
+    } finally {
+        rl.close();
+    }
+}
 
 module.exports = {output, connector};
